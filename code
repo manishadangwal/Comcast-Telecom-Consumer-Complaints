@@ -1,0 +1,73 @@
+# importing all libaries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+%matplotlib inline
+import seaborn as sns
+import scipy as sm
+from bs4 import BeautifulSoup
+from datetime import datetime
+
+##Import data into Python environment.
+data=pd.read_csv("Comcast_telecom_complaints_data.csv")
+data.head(5)
+
+# shape of data
+data.shape
+
+# information of data
+data.info
+
+# Data Stature
+type(data)
+
+# statistical description of data
+print(data.describe())
+
+# checking Null values.
+data.isna().sum()
+
+## trend chart for the number of complaints at monthly and daily granularity levels.
+data['Month']=pd.to_datetime(data['Date_month_year']).dt.month_name()
+data['Date']=pd.to_datetime(data['Date_month_year']).dt.day
+
+##Graph for date wise
+data.groupby(['Date'])['Customer Complaint'].count().plot(kind='bar',color='g',figsize=(8,6))
+plt.show()
+
+##Graph for date wise
+data.groupby(['Month'])['Customer Complaint'].count().plot(kind='bar',color='y',figsize=(8,6))
+plt.show()
+
+#  A table with the frequency of complaint types.
+data['Customer Complaint'].value_counts().to_frame().reset_index()
+
+## Which complaint types are maximum i.e., around internet, network issues, or across any other domains.
+data['Customer Complaint'].value_counts()
+
+## Create a new categorical variable with value as Open and Closed. Open & Pending is to be categorized as Open and Closed & Solved is to be categorized as Closed.
+data['Status']=data['Status'].apply(lambda x:'Open' if ((x=='Open')|(x=='Pending')) else'Closed')
+
+## Provide state wise status of complaints in a stacked bar chart.
+op=data[data['Status']=='Open'].groupby(['State'])['Status'].count().to_frame().reset_index()
+close=data[data['Status']=='Closed'].groupby(['State'])['Status'].count().to_frame().reset_index()
+fig=plt.figure(figsize=(10,10))
+plt.barh(close.State,close.Status)
+plt.barh(op.State,op.Status)
+plt.xlabel("State")
+plt.ylabel("Status Count")
+plt.legend(["closed","open"])
+plt.title("State wise Status Count")
+plt.show()
+
+## maximun complaints
+data.groupby('State')['Customer Complaint'].agg("count").sort_values(ascending=False)
+
+## state in which the highest percentage of unresolved complaints.
+state_unsolved=data.loc[data['Status']=='Open',['State']].value_counts()
+state_unsolved/state_unsolved.sum()*100
+
+## The percentage of complaints resolved till date, which were received through the Internet and customer care calls.
+data[data['Status']=='Closed'].groupby('Status')['Received Via'].value_counts(normalize=True)*100
+                                                                     
+
